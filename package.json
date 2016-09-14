@@ -1,0 +1,39 @@
+{
+  "name": "webdriveragent",
+  "version": "1.0.26",
+  "description": "webdriveragent",
+  "keywords": [
+    "webdriveragent"
+  ],
+  "main": "index.js",
+  "repository": {
+    "type": "git",
+    "url": "git://github.com/xudafeng/webdriveragent.git"
+  },
+  "dependencies": {
+    "adm-zip": "~0.4.7"
+  },
+  "devDependencies": {
+    "co-mocha": "*",
+    "ios-simulator": "^1.0.7",
+    "istanbul": "*",
+    "jshint": "*",
+    "macaca-utils": "^0.1.8",
+    "mocha": "*",
+    "pre-commit": "1.1.1",
+    "should": "*"
+  },
+  "scripts": {
+    "test": "make test",
+    "jshint": "make jshint",
+    "install": "node ./scripts/install.js"
+  },
+  "pre-commit": [
+    "jshint"
+  ],
+  "homepage": "https://github.com/xudafeng/webdriveragent",
+  "author": "xudafeng",
+  "email": "xudafeng@126.com",
+  "blog": "http://xdf.me",
+  "license": "MIT"
+}
