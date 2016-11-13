@@ -1,6 +1,6 @@
 {
   "name": "webdriveragent",
-  "version": "1.0.29",
+  "version": "1.0.30",
   "description": "webdriveragent",
   "keywords": [
     "webdriveragent"
@@ -11,7 +11,8 @@
     "url": "git://github.com/xudafeng/webdriveragent.git"
   },
   "dependencies": {
-    "adm-zip": "~0.4.7"
+    "adm-zip": "~0.4.7",
+    "xutil": "^1.0.2"
   },
   "devDependencies": {
     "co-mocha": "*",
