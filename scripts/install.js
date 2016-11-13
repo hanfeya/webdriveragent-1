@@ -21,7 +21,7 @@ if (!_.isExistedFile(scriptFile)) {
   childProcess.exec(`unzip ${wdaZipPath}`, {
     maxBuffer: 1024 * 512 * 10,
     wrapArgs: false,
-    cwd: path.join(__dirname, '..')
+    cwd: distDirName
   }, (err, stdout) => {
     if (err) {
       console.log(err);
