@@ -5,10 +5,12 @@ const _ = require('xutil');
 const path = require('path');
 const AdmZip = require('adm-zip');
 const childProcess = require('child_process');
+const xcode = require('xcode');
 
 const distDirName = path.join(__dirname, '..');
 const wdaZipPath = path.join(distDirName, 'WebDriverAgent.zip');
 const scriptFile = path.join(distDirName, 'WebDriverAgent', 'Scripts', 'generate_modules.sh');
+const DEVELOPMENT_TEAM = process.env.TEAM_ID || '';
 
 try {
   const zip = new AdmZip(wdaZipPath);
@@ -31,4 +33,51 @@ if (!_.isExistedFile(scriptFile)) {
   });
 } else {
   fs.chmodSync(scriptFile, '755');
+}
+
+try {
+  const schemeName = 'WebDriverAgentRunner';
+  const libName = 'WebDriverAgentLib';
+  const projectPath = path.join(__dirname, '..', 'WebDriverAgent', 'WebDriverAgent.xcodeproj/project.pbxproj');
+  const myProj = xcode.project(projectPath);
+  myProj.parseSync();
+
+  const update = function(schemeName, callback) {
+    const myConfigKey = myProj.pbxTargetByName(schemeName).buildConfigurationList;
+    const buildConfig = myProj.pbxXCConfigurationList()[myConfigKey];
+    const configArray = buildConfig.buildConfigurations;
+    const keys = configArray.map(item => item.value);
+    const pbxXCBuildConfigurationSection = myProj.pbxXCBuildConfigurationSection();
+    keys.forEach(key => {
+      callback(pbxXCBuildConfigurationSection[key].buildSettings);
+    });
+  };
+
+  update(schemeName, function(buildSettings) {
+    const newBundleId = 'com.facebook.WebDriverAgentRunner' + myProj.generateUuid();
+    buildSettings.PRODUCT_BUNDLE_IDENTIFIER = newBundleId;
+    buildSettings.DEVELOPMENT_TEAM = DEVELOPMENT_TEAM;
+  });
+
+  update(libName, function(buildSettings) {
+    buildSettings.DEVELOPMENT_TEAM = DEVELOPMENT_TEAM;
+  });
+
+  const projSect = myProj.getFirstProject();
+  const myRunnerTargetKey = myProj.findTargetKey(schemeName);
+  const myLibTargetKey = myProj.findTargetKey(libName);
+  const targetAttributes = projSect.firstProject.attributes.TargetAttributes;
+  const runnerObj = targetAttributes[myRunnerTargetKey];
+  const libObj = targetAttributes[myLibTargetKey];
+  runnerObj.DevelopmentTeam = libObj.DevelopmentTeam = DEVELOPMENT_TEAM;
+
+  fs.writeFileSync(projectPath, myProj.writeSync());
+
+  if (DEVELOPMENT_TEAM) {
+    console.log('Successfully updated Bundle Id and Team Id.');
+  } else {
+    console.log(`Successfully updated Bundle Id, but no Team Id was provided. Please update your team id manually in ${projectPath}, or reinstall the module with TEAM_ID in environment variable.`);
+  }
+} catch (e) {
+  console.log('Failed to update Bundle Id and Team Id: ', e);
 }
