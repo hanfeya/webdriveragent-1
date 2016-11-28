@@ -3,14 +3,14 @@
 const fs = require('fs');
 const _ = require('xutil');
 const path = require('path');
+const xcode = require('xcode');
 const AdmZip = require('adm-zip');
 const childProcess = require('child_process');
-const xcode = require('xcode');
 
 const distDirName = path.join(__dirname, '..');
 const wdaZipPath = path.join(distDirName, 'WebDriverAgent.zip');
 const scriptFile = path.join(distDirName, 'WebDriverAgent', 'Scripts', 'generate_modules.sh');
-const DEVELOPMENT_TEAM = process.env.TEAM_ID || '';
+const DEVELOPMENT_TEAM = process.env.WDA_TEAM_ID || '';
 
 try {
   const zip = new AdmZip(wdaZipPath);
@@ -54,7 +54,7 @@ try {
   };
 
   update(schemeName, function(buildSettings) {
-    const newBundleId = 'com.facebook.WebDriverAgentRunner' + myProj.generateUuid();
+    const newBundleId = `com.facebook.WebDriverAgentRunner.${_.uuid()}`;
     buildSettings.PRODUCT_BUNDLE_IDENTIFIER = newBundleId;
     buildSettings.DEVELOPMENT_TEAM = DEVELOPMENT_TEAM;
   });
