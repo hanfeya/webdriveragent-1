@@ -10,7 +10,7 @@ const childProcess = require('child_process');
 const distDirName = path.join(__dirname, '..');
 const wdaZipPath = path.join(distDirName, 'WebDriverAgent.zip');
 const scriptFile = path.join(distDirName, 'WebDriverAgent', 'Scripts', 'generate_modules.sh');
-const DEVELOPMENT_TEAM = process.env.WDA_TEAM_ID || '';
+const DEVELOPMENT_TEAM = process.env.DEVELOPMENT_TEAM_ID || '';
 
 try {
   const zip = new AdmZip(wdaZipPath);
