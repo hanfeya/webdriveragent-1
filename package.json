@@ -12,6 +12,7 @@
   },
   "dependencies": {
     "adm-zip": "~0.4.7",
+    "xcode": "^0.8.9",
     "xutil": "^1.0.2"
   },
   "devDependencies": {
