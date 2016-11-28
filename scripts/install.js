@@ -5,6 +5,7 @@ const _ = require('xutil');
 const path = require('path');
 const xcode = require('xcode');
 const AdmZip = require('adm-zip');
+const hostname = require('os').hostname();
 const childProcess = require('child_process');
 
 const distDirName = path.join(__dirname, '..');
@@ -54,7 +55,7 @@ try {
   };
 
   update(schemeName, function(buildSettings) {
-    const newBundleId = `com.facebook.WebDriverAgentRunner.${_.uuid()}`;
+    const newBundleId = `com.facebook.WebDriverAgentRunner.${hostname}`;
     buildSettings.PRODUCT_BUNDLE_IDENTIFIER = newBundleId;
     buildSettings.DEVELOPMENT_TEAM = DEVELOPMENT_TEAM;
   });
