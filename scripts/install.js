@@ -57,11 +57,15 @@ try {
   update(schemeName, function(buildSettings) {
     const newBundleId = `com.facebook.WebDriverAgentRunner.${hostname}`;
     buildSettings.PRODUCT_BUNDLE_IDENTIFIER = newBundleId;
-    buildSettings.DEVELOPMENT_TEAM = DEVELOPMENT_TEAM;
+    if (DEVELOPMENT_TEAM) {
+      buildSettings.DEVELOPMENT_TEAM = DEVELOPMENT_TEAM;
+    }
   });
 
   update(libName, function(buildSettings) {
-    buildSettings.DEVELOPMENT_TEAM = DEVELOPMENT_TEAM;
+    if (DEVELOPMENT_TEAM) {
+      buildSettings.DEVELOPMENT_TEAM = DEVELOPMENT_TEAM;
+    }
   });
 
   const projSect = myProj.getFirstProject();
@@ -70,7 +74,9 @@ try {
   const targetAttributes = projSect.firstProject.attributes.TargetAttributes;
   const runnerObj = targetAttributes[myRunnerTargetKey];
   const libObj = targetAttributes[myLibTargetKey];
-  runnerObj.DevelopmentTeam = libObj.DevelopmentTeam = DEVELOPMENT_TEAM;
+  if (DEVELOPMENT_TEAM) {
+    runnerObj.DevelopmentTeam = libObj.DevelopmentTeam = DEVELOPMENT_TEAM;
+  }
 
   fs.writeFileSync(projectPath, myProj.writeSync());
 
