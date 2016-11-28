@@ -83,7 +83,7 @@ try {
   if (DEVELOPMENT_TEAM) {
     console.log('Successfully updated Bundle Id and Team Id.');
   } else {
-    console.log(`Successfully updated Bundle Id, but no Team Id was provided. Please update your team id manually in ${projectPath}, or reinstall the module with TEAM_ID in environment variable.`);
+    console.log(`Successfully updated Bundle Id, but no Team Id was provided. Please update your team id manually in ${projectPath}, or reinstall the module with DEVELOPMENT_TEAM_ID in environment variable.`);
   }
 } catch (e) {
   console.log('Failed to update Bundle Id and Team Id: ', e);
