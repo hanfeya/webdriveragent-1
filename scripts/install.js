@@ -55,7 +55,7 @@ try {
   };
 
   update(schemeName, function(buildSettings) {
-    const newBundleId = `com.facebook.WebDriverAgentRunner.${hostname}`;
+    const newBundleId = process.env.BUNDLE_ID || `com.facebook.WebDriverAgentRunner.${hostname}`;
     buildSettings.PRODUCT_BUNDLE_IDENTIFIER = newBundleId;
     if (DEVELOPMENT_TEAM) {
       buildSettings.DEVELOPMENT_TEAM = DEVELOPMENT_TEAM;
