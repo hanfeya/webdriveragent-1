@@ -1,6 +1,6 @@
 {
   "name": "webdriveragent",
-  "version": "1.0.38",
+  "version": "1.0.39",
   "description": "webdriveragent",
   "keywords": [
     "webdriveragent"
@@ -28,7 +28,8 @@
   "scripts": {
     "test": "make test",
     "jshint": "make jshint",
-    "install": "node ./scripts/install.js"
+    "install": "node ./scripts/install.js",
+    "prepublishOnly": "make zip"
   },
   "pre-commit": [
     "jshint"

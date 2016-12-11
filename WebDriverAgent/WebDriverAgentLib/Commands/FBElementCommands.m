@@ -51,15 +51,22 @@
     [[FBRoute GET:@"/element/:uuid/name"] respondWithTarget:self action:@selector(handleGetName:)],
     [[FBRoute POST:@"/element/:uuid/value"] respondWithTarget:self action:@selector(handleSetValue:)],
     [[FBRoute POST:@"/element/:uuid/click"] respondWithTarget:self action:@selector(handleClick:)],
+    [[FBRoute POST:@"/element/:uuid/pinch"] respondWithTarget:self action:@selector(handlePinch:)],
     [[FBRoute POST:@"/element/:uuid/clear"] respondWithTarget:self action:@selector(handleClear:)],
+    [[FBRoute POST:@"/element/:uuid/rotate"] respondWithTarget:self action:@selector(handleRotate:)],
     [[FBRoute POST:@"/uiaElement/:uuid/doubleTap"] respondWithTarget:self action:@selector(handleDoubleTap:)],
+    [[FBRoute POST:@"/doubleTap"] respondWithTarget:self action:@selector(handleDoubleTapCoordinate:)],
     [[FBRoute POST:@"/uiaElement/:uuid/touchAndHold"] respondWithTarget:self action:@selector(handleTouchAndHold:)],
+    [[FBRoute POST:@"/touchAndHold"] respondWithTarget:self action:@selector(handleTouchAndHoldCoordinate:)],
     [[FBRoute POST:@"/uiaElement/:uuid/scroll"] respondWithTarget:self action:@selector(handleScroll:)],
-    [[FBRoute POST:@"/element/:id/swipe"] respondWithTarget:self action:@selector(handleDrag:)],
+    [[FBRoute POST:@"/element/:id/swipe"] respondWithTarget:self action:@selector(oldHandleDrag:)],
+    [[FBRoute POST:@"/uiaTarget/:uuid/dragfromtoforduration"] respondWithTarget:self action:@selector(handleDrag:)],
+    [[FBRoute POST:@"/dragfromtoforduration"] respondWithTarget:self action:@selector(handleDragCoordinate:)],
     [[FBRoute POST:@"/tap/:uuid"] respondWithTarget:self action:@selector(handleTap:)],
     [[FBRoute POST:@"/keys"] respondWithTarget:self action:@selector(handleKeys:)],
     [[FBRoute GET:@"/window/:uuid/size"] respondWithTarget:self action:@selector(handleGetWindowSize:)],
     [[FBRoute GET:@"/element/:uuid/property/:name"] respondWithTarget:self action:@selector(handleGetAttribute:)]
+
   ];
 }
 
@@ -148,6 +155,16 @@
   return FBResponseWithElementUUID(elementUUID);
 }
 
++ (id<FBResponsePayload>)handlePinch:(FBRouteRequest *)request
+{
+    FBElementCache *elementCache = request.session.elementCache;
+    XCUIElement *element = [elementCache elementForUUID:request.parameters[@"uuid"]];
+    CGFloat scale = (CGFloat)[request.arguments[@"scale"] doubleValue];
+    CGFloat velocity = (CGFloat)[request.arguments[@"velocity"] doubleValue];
+    [element pinchWithScale:scale velocity:velocity];
+    return FBResponseWithOK();
+}
+
 + (id<FBResponsePayload>)handleClick:(FBRouteRequest *)request
 {
   FBElementCache *elementCache = request.session.elementCache;
@@ -180,12 +197,36 @@
   return FBResponseWithOK();
 }
 
++ (id<FBResponsePayload>)handleDoubleTapCoordinate:(FBRouteRequest *)request
+{
+    XCUICoordinate *doubleTapCoordinate = [self.class getGestureCoordinate:request];
+    [doubleTapCoordinate doubleTap];
+    return FBResponseWithOK();
+}
+
++ (id<FBResponsePayload>)handleRotate:(FBRouteRequest *)request
+{
+    FBElementCache *elementCache = request.session.elementCache;
+    XCUIElement *element = [elementCache elementForUUID:request.parameters[@"uuid"]];
+    CGFloat rotation = (CGFloat)[request.arguments[@"rotation"] floatValue];
+    CGFloat velocity = (CGFloat)[request.arguments[@"velocity"] floatValue];
+    [element rotate:rotation withVelocity:velocity];
+    return FBResponseWithOK();
+}
+
 + (id<FBResponsePayload>)handleTouchAndHold:(FBRouteRequest *)request
 {
   FBElementCache *elementCache = request.session.elementCache;
   XCUIElement *element = [elementCache elementForUUID:request.parameters[@"uuid"]];
   [element pressForDuration:[request.arguments[@"duration"] doubleValue]];
   return FBResponseWithOK();
+}
+
++ (id<FBResponsePayload>)handleTouchAndHoldCoordinate:(FBRouteRequest *)request
+{
+    XCUICoordinate *pressCoordinate = [self.class getGestureCoordinate:request];
+    [pressCoordinate pressForDuration:[request.arguments[@"duration"] doubleValue]];
+    return FBResponseWithOK();
 }
 
 + (id<FBResponsePayload>)handleScroll:(FBRouteRequest *)request
@@ -229,12 +270,44 @@
   return FBResponseWithErrorFormat(@"Unsupported scroll type");
 }
 
-+ (id<FBResponsePayload>)handleDrag:(FBRouteRequest *)request
++ (id<FBResponsePayload>)oldHandleDrag:(FBRouteRequest *)request
 {
     FBSession *session = request.session;
     CGVector startPoint = CGVectorMake((CGFloat)[request.arguments[@"startX"] doubleValue], (CGFloat)[request.arguments[@"startY"] doubleValue]);
     CGVector endPoint = CGVectorMake((CGFloat)[request.arguments[@"endX"] doubleValue], (CGFloat)[request.arguments[@"endY"] doubleValue]);
     NSTimeInterval duration = [request.arguments[@"duration"] doubleValue]/1000;
+    XCUICoordinate *appCoordinate = [[XCUICoordinate alloc] initWithElement:session.application normalizedOffset:CGVectorMake(0, 0)];
+    XCUICoordinate *endCoordinate = [[XCUICoordinate alloc] initWithCoordinate:appCoordinate pointsOffset:endPoint];
+    XCUICoordinate *startCoordinate = [[XCUICoordinate alloc] initWithCoordinate:appCoordinate pointsOffset:startPoint];
+    [startCoordinate pressForDuration:duration thenDragToCoordinate:endCoordinate];
+    return FBResponseWithOK();
+}
+
++ (id<FBResponsePayload>)handleDrag:(FBRouteRequest *)request
+{
+    FBSession *session = request.session;
+    FBElementCache *elementCache = request.session.elementCache;
+    XCUIElement *element = [elementCache elementForUUID:request.parameters[@"uuid"]];
+
+    if (element == nil) {
+        return FBResponseWithErrorFormat(@"Missing 'element' parameter");
+    }
+
+    CGVector endPoint = CGVectorMake((CGFloat)[request.arguments[@"toX"] doubleValue], (CGFloat)[request.arguments[@"toY"] doubleValue]);
+    NSTimeInterval duration = [request.arguments[@"duration"] doubleValue];
+    XCUICoordinate *appCoordinate = [[XCUICoordinate alloc] initWithElement:session.application normalizedOffset:CGVectorMake(0, 0)];
+    XCUICoordinate *endCoordinate = [[XCUICoordinate alloc] initWithCoordinate:appCoordinate pointsOffset:endPoint];
+    XCUICoordinate *startCoordinate = [element coordinateWithNormalizedOffset:CGVectorMake(0, 0)];
+    [startCoordinate pressForDuration:duration thenDragToCoordinate:endCoordinate];
+    return FBResponseWithOK();
+}
+
++ (id<FBResponsePayload>)handleDragCoordinate:(FBRouteRequest *)request
+{
+    FBSession *session = request.session;
+    CGVector startPoint = CGVectorMake((CGFloat)[request.arguments[@"fromX"] doubleValue], (CGFloat)[request.arguments[@"fromY"] doubleValue]);
+    CGVector endPoint = CGVectorMake((CGFloat)[request.arguments[@"toX"] doubleValue], (CGFloat)[request.arguments[@"toY"] doubleValue]);
+    NSTimeInterval duration = [request.arguments[@"duration"] doubleValue];
     XCUICoordinate *appCoordinate = [[XCUICoordinate alloc] initWithElement:session.application normalizedOffset:CGVectorMake(0, 0)];
     XCUICoordinate *endCoordinate = [[XCUICoordinate alloc] initWithCoordinate:appCoordinate pointsOffset:endPoint];
     XCUICoordinate *startCoordinate = [[XCUICoordinate alloc] initWithCoordinate:appCoordinate pointsOffset:startPoint];
@@ -289,6 +362,15 @@
     return FBResponseWithError(error);
   }
   return FBResponseWithOK();
+}
+
++ (XCUICoordinate *)getGestureCoordinate:(FBRouteRequest *)request
+{
+    FBSession *session = request.session;
+    CGVector point = CGVectorMake((CGFloat)[request.arguments[@"x"] doubleValue], (CGFloat)[request.arguments[@"y"] doubleValue]);
+    XCUICoordinate *appCoordinate = [[XCUICoordinate alloc] initWithElement:session.application normalizedOffset:CGVectorMake(0, 0)];
+    XCUICoordinate *gestureCoordinate = [[XCUICoordinate alloc] initWithCoordinate:appCoordinate pointsOffset:point];
+    return gestureCoordinate;
 }
 
 @end
