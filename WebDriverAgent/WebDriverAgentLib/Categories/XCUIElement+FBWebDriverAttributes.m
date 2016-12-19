@@ -121,29 +121,13 @@
 
 - (NSDictionary *)wdRect
 {
-    return
-    @{
-      @"origin":
-          @{
-              @"x": @(CGRectGetMinX(self.frame)),
-              @"y": @(CGRectGetMinY(self.frame)),
-              },
-      @"size":
-          @{
-              @"width": @(CGRectGetWidth(self.frame)),
-              @"height": @(CGRectGetHeight(self.frame)),
-              },
-      };
-}
-
-- (NSDictionary *)wdSize
-{
-    return (NSDictionary *_Nonnull)self.wdRect[@"size"];
-}
-
-- (NSDictionary *)wdOrigin
-{
-    return (NSDictionary *_Nonnull)self.wdRect[@"origin"];
+  CGRect frame = self.wdFrame;
+  return @{
+    @"x": @(CGRectGetMinX(frame)),
+    @"y": @(CGRectGetMinY(frame)),
+    @"width": @(CGRectGetWidth(frame)),
+    @"height": @(CGRectGetHeight(frame)),
+  };
 }
 
 @end
