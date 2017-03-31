@@ -9,8 +9,13 @@
 
 #import "XCUIElement+FBIsVisible.h"
 
+#import "FBApplication.h"
+#import "FBConfiguration.h"
+#import "FBMathUtils.h"
 #import "XCElementSnapshot+FBHelpers.h"
 #import "XCTestPrivateSymbols.h"
+#import <XCTest/XCUIDevice.h>
+
 
 @implementation XCUIElement (FBIsVisible)
 
@@ -28,7 +33,18 @@
 
 - (BOOL)fb_isVisible
 {
-  return [(NSNumber *)[self fb_attributeValue:FB_XCAXAIsVisibleAttribute] boolValue];
+  if (CGRectIsEmpty(self.frame) || CGRectIsEmpty(self.visibleFrame)) {
+    return NO;
+  }
+  if ([FBConfiguration shouldUseTestManagerForVisibilityDetection]) {
+    return [(NSNumber *)[self fb_attributeValue:FB_XCAXAIsVisibleAttribute] boolValue];
+  }
+  XCElementSnapshot *app = [self _rootElement];
+  CGSize screenSize = FBAdjustDimensionsForApplication(app.frame.size, (UIInterfaceOrientation)[XCUIDevice sharedDevice].orientation);
+  CGRect screenFrame = CGRectMake(0, 0, screenSize.width, screenSize.height);
+  BOOL rectIntersects = CGRectIntersectsRect(self.visibleFrame, screenFrame);
+  BOOL isActionable = CGRectContainsPoint(app.frame, self.hitPoint);
+  return rectIntersects && isActionable;
 }
 
 @end

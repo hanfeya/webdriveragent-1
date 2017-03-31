@@ -13,17 +13,22 @@
 #import "XCElementSnapshot.h"
 #import "FBElementTypeTransformer.h"
 #import "FBMacros.h"
+#import "XCElementSnapshot+FBHelpers.h"
+#import "XCUIDevice+FBHelpers.h"
 #import "XCUIElement+FBIsVisible.h"
 #import "XCUIElement+FBWebDriverAttributes.h"
-#import "XCElementSnapshot+FBHelpers.h"
+
+const static NSTimeInterval FBMinimumAppSwitchWait = 3.0;
 
 @implementation XCUIApplication (FBHelpers)
 
 - (BOOL)fb_deactivateWithDuration:(NSTimeInterval)duration error:(NSError **)error
 {
   NSString *applicationIdentifier = self.label;
-  [[XCUIDevice sharedDevice] pressButton:XCUIDeviceButtonHome];
-  [[NSRunLoop currentRunLoop] runUntilDate:[NSDate dateWithTimeIntervalSinceNow:duration]];
+  if(![[XCUIDevice sharedDevice] fb_goToHomescreenWithError:error]) {
+    return NO;
+  }
+  [[NSRunLoop currentRunLoop] runUntilDate:[NSDate dateWithTimeIntervalSinceNow:MAX(duration, FBMinimumAppSwitchWait)]];
   if (![[FBSpringboardApplication fb_springboard] fb_tapApplicationWithIdentifier:applicationIdentifier error:error]) {
     return NO;
   }
@@ -58,7 +63,7 @@
   info[@"value"] = FBValueOrNull(snapshot.wdValue);
   info[@"label"] = FBValueOrNull(snapshot.wdLabel);
   info[@"rect"] = snapshot.wdRect;
-  info[@"bounds"] = NSStringFromCGRect(snapshot.wdFrame);
+  info[@"frame"] = NSStringFromCGRect(snapshot.wdFrame);
   info[@"isEnabled"] = [@([snapshot isWDEnabled]) stringValue];
   info[@"isVisible"] = [@([snapshot isWDVisible]) stringValue];
 
@@ -76,15 +81,14 @@
 {
   BOOL isAccessible = [snapshot isWDAccessible];
   BOOL isVisible = [snapshot isWDVisible];
-  if (!isVisible) {
-    return nil;
-  }
 
   NSMutableDictionary *info = [[NSMutableDictionary alloc] init];
 
   if (isAccessible) {
-    info[@"value"] = FBValueOrNull(snapshot.wdValue);
-    info[@"label"] = FBValueOrNull(snapshot.wdLabel);
+    if (isVisible) {
+      info[@"value"] = FBValueOrNull(snapshot.wdValue);
+      info[@"label"] = FBValueOrNull(snapshot.wdLabel);
+    }
   } else {
     NSMutableArray *children = [[NSMutableArray alloc] init];
     for (XCElementSnapshot *childSnapshot in snapshot.children) {

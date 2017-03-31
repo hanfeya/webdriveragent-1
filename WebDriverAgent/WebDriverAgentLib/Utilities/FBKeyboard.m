@@ -11,6 +11,7 @@
 
 
 #import "FBApplication.h"
+#import "FBXCTestDaemonsProxy.h"
 #import "FBErrorBuilder.h"
 #import "FBRunLoopSpinner.h"
 #import "FBMacros.h"
@@ -30,7 +31,7 @@ static const NSUInteger FBTypingFrequency = 60;
   __block BOOL didSucceed = NO;
   __block NSError *innerError;
   [FBRunLoopSpinner spinUntilCompletion:^(void(^completion)()){
-    [[XCTestDriver sharedTestDriver].managerProxy _XCT_sendString:text maximumFrequency:FBTypingFrequency completion:^(NSError *typingError){
+    [[FBXCTestDaemonsProxy testRunnerProxy] _XCT_sendString:text maximumFrequency:FBTypingFrequency completion:^(NSError *typingError){
       didSucceed = (typingError == nil);
       innerError = typingError;
       completion();
@@ -53,6 +54,10 @@ static const NSUInteger FBTypingFrequency = 60;
      return (foundKeyboard.exists ? foundKeyboard : nil);
    }
    error:error];
+
+  if (!keyboard) {
+    return NO;
+  }
 
   if (![keyboard fb_waitUntilFrameIsStable]) {
     return
