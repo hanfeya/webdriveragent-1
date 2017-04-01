@@ -47,17 +47,7 @@
 {
   FBApplication *application = request.session.application ?: [FBApplication fb_activeApplication];
   NSString *sourceType = request.parameters[@"format"];
-  id result;
-  if (!sourceType || [sourceType caseInsensitiveCompare:@"xml"] == NSOrderedSame) {
-    result = [FBXPath xmlStringWithSnapshot:application.lastSnapshot];
-  } else if ([sourceType caseInsensitiveCompare:@"json"] == NSOrderedSame) {
-    result = application.fb_tree;
-  } else {
-    return FBResponseWithStatus(
-      FBCommandStatusUnsupported,
-      [NSString stringWithFormat:@"Unknown source type '%@'. Only 'xml' and 'json' source types are supported.", sourceType]
-    );
-  }
+  id result = application.fb_tree;
   if (nil == result) {
     return FBResponseWithErrorFormat(@"Cannot get '%@' source of the current application", sourceType);
   }
